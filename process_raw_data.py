@@ -8,7 +8,7 @@ import sqlite3
 def get_cli_args() -> str:
     """Gets cli filename argument."""
     parser = ArgumentParser()
-    parser.add_argument("-f", "--filename", required=True, type=str,
+    parser.add_argument("filename",type=str,
                 help="-f or --filename, must enter a csv file location.")
     args = parser.parse_args()
     return args.filename
@@ -118,9 +118,9 @@ def order_rows_by_rating(data:list[dict]) -> list[dict]:
 
 
 # Create csv
-def create_csv(data: list[dict], filename: str='PROCESSED_DATA.csv', folder: str='data') -> None:
+def create_csv(data: list[dict], filename: str='PROCESSED_DATA.csv') -> None:
     """Creates a csv."""
-    with open(f"{folder}/{filename}", mode='w', newline='', encoding="UTF-8") as new_csv:
+    with open(filename, mode='w', newline='', encoding="UTF-8") as new_csv:
         writer = csv.writer(new_csv)
         # Write Header
         writer.writerow(["title", "author_name", "year", "rating", "ratings"])
