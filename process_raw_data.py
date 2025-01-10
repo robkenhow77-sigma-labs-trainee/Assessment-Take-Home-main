@@ -1,6 +1,6 @@
 """A script to process book data."""
 from argparse import ArgumentParser
-import csv 
+import csv
 import sqlite3
 
 
@@ -8,7 +8,7 @@ import sqlite3
 def get_cli_args() -> str:
     """Gets cli filename argument."""
     parser = ArgumentParser()
-    parser.add_argument("-f", "--filename", required=True, type=str, 
+    parser.add_argument("-f", "--filename", required=True, type=str,
                 help="-f or --filename, must enter a csv file location.")
     args = parser.parse_args()
     return args.filename
@@ -21,7 +21,7 @@ def get_csv_data(file_name: str, folder: str='data') -> list[dict]:
     return as a list of dictionaries."""
     with open(f'{folder}/{file_name}', mode='r', encoding="UTF-8") as csv_file:
         rows = csv.DictReader(csv_file)
-        return [row for row in rows]
+        return list(rows)
 
 
 def get_authors_names(filename:str="authors.db", folder:str="data") -> list[tuple]:
@@ -29,18 +29,18 @@ def get_authors_names(filename:str="authors.db", folder:str="data") -> list[tupl
     conn = sqlite3.connect(f'{folder}/{filename}')
     cur = conn.cursor()
     cur.execute("SELECT * FROM author"  )
-    authors = cur.fetchall()
+    authors_list = cur.fetchall()
     cur.close()
     conn.close()
-    return authors
-    
+    return authors_list
+
 
 # Transform
 def get_relevant_data(data: list[str]) -> list[dict]:
     """Gets only the relevant columns."""
     relevant_data = []
     for row in data:
-      relevant_data.append({
+        relevant_data.append({
             "title": row["book_title"],
             "author_id": row["author_id"],
             "year": row["Year released"],
@@ -59,7 +59,7 @@ def filter_for_author_title_missing_data(data: list[dict]) -> list[dict]:
         if title != '' and author_id != '':
             filtered_data.append(row)
     return filtered_data
-            
+
 
 def clean_title(data: list[dict]) -> list[dict]:
     """Cleans the book title to the appropriate format."""
@@ -90,7 +90,7 @@ def clean_rating(data: list[dict]) -> list[dict]:
     for row in data:
         row["rating"] = float(row["rating"].replace(",", "."))
     return data
- 
+
 
 def clean_ratings(data: list[dict]) -> list[dict]:
     """Cleans the book ratings to the appropriate format."""
@@ -99,11 +99,11 @@ def clean_ratings(data: list[dict]) -> list[dict]:
     return data
 
 
-def map_author_id(data: list[dict], authors: list[tuple]) -> list[dict]:
+def map_author_id(data: list[dict], authors_and_id: list[tuple]) -> list[dict]:
     """Creates a mapping dicitonary in the form -> id: name
     Then maps the author_id to author_name.
     Adds author_name key and removes authour_id """
-    mapping = {str(author[0]): author[1] for author in authors}
+    mapping = {str(author[0]): author[1] for author in authors_and_id}
     for row in data:
         author_id = row["author_id"]
         author_name = mapping[str(author_id)]
@@ -126,31 +126,31 @@ def create_csv(data: list[dict], filename: str='PROCESSED_DATA.csv', folder: str
         writer.writerow(["title", "author_name", "year", "rating", "ratings"])
         # Write rows
         for row in data:
-            values = [row["title"], row["author_name"], row["year"], row["rating"], row["ratings"]] 
-            writer.writerow(values) 
+            values = [row["title"], row["author_name"], row["year"], row["rating"], row["ratings"]]
+            writer.writerow(values)
 
 
 if __name__ == "__main__":
     # Initialise
-    filename = get_cli_args()
+    file = get_cli_args()
 
     # Get csv and author data
-    data = get_csv_data(filename)
+    csv_data = get_csv_data(file)
     authors = get_authors_names()
 
     # Clean data
-    data = get_relevant_data(data)
-    data = filter_for_author_title_missing_data(data)
-    data = clean_title(data)
-    data = clean_author_id(data)
-    data = clean_year(data)
-    data = clean_rating(data)
-    data = clean_ratings(data)
-    data = map_author_id(data, authors)
-    data = order_rows_by_rating(data)
+    cleaning_data = get_relevant_data(csv_data)
+    cleaning_data = filter_for_author_title_missing_data(cleaning_data)
+    cleaning_data = clean_title(cleaning_data)
+    cleaning_data = clean_author_id(cleaning_data)
+    cleaning_data = clean_year(cleaning_data)
+    cleaning_data = clean_rating(cleaning_data)
+    cleaning_data = clean_ratings(cleaning_data)
+    cleaning_data = map_author_id(cleaning_data, authors)
+    clean_data = order_rows_by_rating(cleaning_data)
 
     # Create csv
-    create_csv(data)
+    create_csv(clean_data)
 
 
     # with open()
